@@ -27,6 +27,7 @@
 
   --pad:clamp(18px,4.5vw,60px);
   --maxw:1240px;
+  --hdr-h:72px;   /* высота фиксированной шапки, её резервирует первый экран */
   --ease:cubic-bezier(.22,.68,.28,1);
   --ease-out:cubic-bezier(.16,1,.3,1);
   color-scheme:light;
@@ -152,25 +153,45 @@ button{font:inherit;color:inherit;background:none;border:0}
    Высокая секция даёт скроллу «ход», внутри липкая сцена.
    ============================================================ */
 .hero{height:300vh;position:relative}
-.hero__stick{position:sticky;top:0;height:100vh;min-height:600px;overflow:hidden;display:flex;align-items:center}
-.hero__grid{
-  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,520px);
-  gap:clamp(24px,4vw,60px);align-items:center;width:100%;
+/* Сцена липкая и ровно в высоту экрана, поэтому весь контент обязан
+   в неё влезать. Отступ сверху равен высоте фиксированной шапки —
+   без него центрированный заголовок уезжал под меню. */
+.hero__stick{
+  position:sticky;top:0;
+  height:100vh;height:100dvh;
+  overflow:hidden;display:flex;align-items:center;
+  padding-top:var(--hdr-h);
+  padding-bottom:clamp(18px,4vh,52px);
 }
+.hero__grid{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,440px);
+  gap:clamp(20px,3.4vw,52px);align-items:center;width:100%;
+}
+/* Колонка текста — контейнер: кегль заголовка считается от её ширины,
+   а не от ширины окна. Иначе на широком экране шрифт растёт, колонка
+   остаётся прежней, и строки начинают переноситься. */
+.hero__copy{container-type:inline-size}
 .hero__title{
   font-family:var(--f-display);font-weight:700;
-  font-size:clamp(2.1rem,5.4vw,4.3rem);
-  line-height:.98;letter-spacing:-.045em;margin:0 0 24px;
+  /* cqi — процент ширины колонки; vh дополнительно ограничивает
+     кегль на низких ноутбучных экранах. */
+  font-size:min(clamp(1.6rem,6.7cqi,3.6rem),8.2vh);
+  line-height:1.04;letter-spacing:-.045em;
+  margin:0 0 clamp(14px,2.4vh,24px);
 }
 .hero__title span{display:block;overflow:hidden}
 .hero__title i{display:block;font-style:normal;transform:translateY(105%);transition:transform .95s var(--ease-out)}
 .hero.ready .hero__title i{transform:none}
 .hero__title i:nth-child(1){transition-delay:.05s}
-.hero__sub{color:var(--ink-2);max-width:44ch;margin:0 0 32px;font-size:1.03rem}
+.hero__sub{
+  color:var(--ink-2);max-width:44ch;
+  margin:0 0 clamp(16px,3vh,32px);
+  font-size:clamp(.94rem,1.2vw,1.03rem);
+}
 .hero__acts{display:flex;flex-wrap:wrap;gap:12px}
 
 /* индикатор прогресса разбора */
-.hero__meter{margin-top:38px;max-width:270px}
+.hero__meter{margin-top:clamp(18px,3.4vh,38px);max-width:270px}
 .hero__meter b{
   font-family:var(--f-mono);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;
   color:var(--ink-3);font-weight:400;display:flex;justify-content:space-between;margin-bottom:9px;
@@ -182,7 +203,7 @@ button{font:inherit;color:inherit;background:none;border:0}
 .stage{
   position:relative;
   display:grid;place-items:center;
-  min-height:min(72vh,640px);
+  min-height:min(62vh,560px);
   perspective:1500px;perspective-origin:50% 42%;
 }
 .device{
@@ -190,7 +211,7 @@ button{font:inherit;color:inherit;background:none;border:0}
   /* Ширина ограничена и по ширине окна, и по высоте: сцена липкая и
      занимает весь экран, поэтому на низких окнах устройство обязано
      ужиматься — иначе разложенной стопке некуда разлетаться. */
-  width:min(clamp(150px,17vw,208px),22vh);
+  width:min(clamp(140px,17vw,208px),20vh);
   aspect-ratio:1/2.02;
   transform-style:preserve-3d;
   /* --dy опускает устройство по мере разлёта: стопка растёт только
@@ -294,16 +315,51 @@ button{font:inherit;color:inherit;background:none;border:0}
 .hero__hint i::after{content:"";position:absolute;inset:0;background:var(--ink);animation:drop 1.9s var(--ease) infinite}
 @keyframes drop{0%{transform:translateY(-100%)}60%,100%{transform:translateY(100%)}}
 
+/* Низкие окна — типичный ноутбук 13—14". Убираем второстепенное,
+   чтобы заголовок и кнопки гарантированно помещались в экран. */
+@media (max-height:820px){
+  .hero__meter{display:none}
+}
+@media (max-height:700px){
+  .hero__hint{display:none}
+  .stage{min-height:min(54vh,440px)}
+}
+
 @media (max-width:899px){
+  /* Шапка на мобильных ниже — 12px возвращаются первому экрану */
+  :root{--hdr-h:60px}
+  .hdr__in{height:60px}
   .hero{height:250vh}
-  .hero__grid{grid-template-columns:1fr;gap:18px}
-  .stage{min-height:clamp(300px,42vh,420px);order:-1;padding-bottom:26px}
+  /* На узком экране сцена и текст стоят друг под другом и делят одну
+     высоту экрана. Всё, что ниже, — подгонка под этот бюджет. */
+  .hero__grid{grid-template-columns:1fr;gap:clamp(8px,1.6vh,16px)}
+  .stage{min-height:min(32vh,270px);order:-1;padding-bottom:18px}
+  /* высоту сцены задаёт само устройство, поэтому режем именно его */
+  .device{width:min(clamp(120px,34vw,180px),17vh)}
+  .hero__title{font-size:min(clamp(1.5rem,8.2cqi,2.3rem),6.2vh)}
+  .hero__sub{
+    font-size:.92rem;
+    margin-bottom:clamp(10px,1.8vh,18px);
+    display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;
+  }
+  .hero__stick{padding-bottom:clamp(12px,2vh,24px)}
   .hero__meter{display:none}
   /* Выноски по бокам устройства сталкиваются друг с другом на узком
      экране — вместо них компактная легенда под сценой. */
   .cap{display:none}
   .caps{display:none}
   .legend{display:flex}
+}
+
+/* Совсем низкие телефоны (360×600 и подобные): бюджета высоты нет,
+   поэтому убираем надзаголовок, режем подзаголовок до двух строк
+   и ещё уменьшаем устройство. Кнопки и заголовок остаются целыми. */
+@media (max-width:899px) and (max-height:680px){
+  .hero__copy .kicker{display:none}
+  .hero__sub{-webkit-line-clamp:2}
+  .stage{min-height:min(26vh,200px);padding-bottom:12px}
+  .device{width:min(clamp(104px,30vw,150px),14vh)}
+  .legend{font-size:.58rem;gap:4px 10px}
 }
 
 /* ============================================================
